@@ -259,7 +259,33 @@ function renderQ(){var q=shuffledQs[currentQ];var t=shuffledQs.length;$('prog').
 function selectOpt(i){answers[currentQ]=i;document.querySelectorAll('#q-opts .btn').forEach(function(b,idx){b.classList.toggle('selected',idx===i);});$('btn-next').style.display='block';}
 function nextQ(){if(answers[currentQ]===undefined)return;if(currentQ<shuffledQs.length-1){currentQ++;renderQ();}else{calcResult();}}
 function calcResult(){var sc={S:0,E:0,C:0,D:0};shuffledQs.forEach(function(q,i){if(answers[i]!==undefined)sc[q.shuffledOpts[answers[i]].arch]++;});var sorted=Object.entries(sc).sort(function(a,b){return b[1]-a[1];});var top=sorted[0][0];var blend=sorted[0][1]===sorted[1][1]?sorted[1][0]:null;var entry={name:pname,arch:top,blend:blend,scores:sc,ts:Date.now()};try{var s=JSON.parse(localStorage.getItem('ndna_results')||'[]');s.push(entry);localStorage.setItem('ndna_results',JSON.stringify(s));}catch(e){}renderResult(top,blend,sc);show('s-result');}
-function renderResult(arch,blend,scores){var A=ARCHS[arch];$('res-greet').textContent=pname+', '+(lang==='en'?'here is your result:':'inilah keputusan anda:');$('res-lbl').textContent=lang==='en'?'Your negotiation archetype':'Arketip rundingan anda';$('res-name').textContent=A.name[lang];$('res-name').style.color=A.color;var tag=$('res-tag');tag.textContent=A.tag[lang];tag.style.background=A.fill;tag.style.color=A.tc;$('res-desc').textContent=A.summary[lang];var sg=$('res-scores');sg.innerHTML='';['S','E','C','D'].forEach(function(k){var ac=ARCHS[k];var c=document.createElement('div');c.className='score-cell';c.style.background=k===arch?ac.fill:'#f8f8f8';c.style.borderColor=k===arch?ac.color:'#e0e0e0';c.innerHTML='<div class="score-n" style="color:'+(k===arch?ac.color:'#1a1a1a')+'">'+(scores?scores[k]:'-')+'</div><div class="score-l">'+ac.name[lang]+'</div>';sg.appendChild(c);});if(blend){$('res-blend').style.display='block';$('res-blend').textContent=(lang==='en'?'You are a blend of ':'Anda adalah gabungan ')+ARCHS[arch].name[lang]+(lang==='en'?' and ':' dan ')+ARCHS[blend].name[lang]+(lang==='en'?'. Both profiles apply to you.':'. Kedua-dua profil terpakai kepada anda.');}else{$('res-blend').style.display='none';}var sec=$('res-sections');sec.innerHTML='';var sections=[{key:'strengths',en:'My strengths',bm:'Kekuatan saya'},{key:'blindspots',en:'My blind spots',bm:'Titik buta saya'},{key:'gameNote',en:'What to expect in the boardgames',bm:'Apa yang dijangka dalam permainan papan'},{key:'develop',en:'My development focus',bm:'Fokus pembangunan saya'}];sections.forEach(function(s){var val=A[s.key];var d=document.createElement('div');d.className='section';d.innerHTML='<div class="sec-toggle" onclick="var b=this.nextElementSibling;b.classList.toggle(\'open\');this.querySelector(\'.arrow\').textContent=b.classList.contains(\'open\')?\'−\':\'+">'+(s[lang]||s.en)+' <span class="arrow">+</span></div><div class="sec-body">'+(Array.isArray(val[lang]||val)?((val[lang]||val).map(function(i){return'<div class="sec-item">'+i+'</div>';}).join('')):'<div class="sec-item">'+(val[lang]||val)+'</div>')+'</div>';sec.appendChild(d);});$('btn-retake').textContent=lang==='en'?'Take Quiz Again':'Ambil Kuiz Semula';}
+function renderResult(arch,blend,scores){var A=ARCHS[arch];$('res-greet').textContent=pname+', '+(lang==='en'?'here is your result:':'inilah keputusan anda:');$('res-lbl').textContent=lang==='en'?'Your negotiation archetype':'Arketip rundingan anda';$('res-name').textContent=A.name[lang];$('res-name').style.color=A.color;var tag=$('res-tag');tag.textContent=A.tag[lang];tag.style.background=A.fill;tag.style.color=A.tc;$('res-desc').textContent=A.summary[lang];var sg=$('res-scores');sg.innerHTML='';['S','E','C','D'].forEach(function(k){var ac=ARCHS[k];var c=document.createElement('div');c.className='score-cell';c.style.background=k===arch?ac.fill:'#f8f8f8';c.style.borderColor=k===arch?ac.color:'#e0e0e0';c.innerHTML='<div class="score-n" style="color:'+(k===arch?ac.color:'#1a1a1a')+'">'+(scores?scores[k]:'-')+'</div><div class="score-l">'+ac.name[lang]+'</div>';sg.appendChild(c);});if(blend){$('res-blend').style.display='block';$('res-blend').textContent=(lang==='en'?'You are a blend of ':'Anda adalah gabungan ')+ARCHS[arch].name[lang]+(lang==='en'?' and ':' dan ')+ARCHS[blend].name[lang]+(lang==='en'?'. Both profiles apply to you.':'. Kedua-dua profil terpakai kepada anda.');}else{$('res-blend').style.display='none';}var sec=$('res-sections');sec.innerHTML='';var sections=[{key:'strengths',en:'My strengths',bm:'Kekuatan saya'},{key:'blindspots',en:'My blind spots',bm:'Titik buta saya'},{key:'gameNote',en:'What to expect in the boardgames',bm:'Apa yang dijangka dalam permainan papan'},{key:'develop',en:'My development focus',bm:'Fokus pembangunan saya'}];sections.forEach(function(s){
+  var val=A[s.key];
+  var d=document.createElement('div');
+  d.className='section';
+  // Build toggle header
+  var hdr=document.createElement('div');
+  hdr.className='sec-toggle';
+  hdr.innerHTML=(s[lang]||s.en)+' <span class="arrow">+</span>';
+  // Build body
+  var body=document.createElement('div');
+  body.className='sec-body';
+  var items=Array.isArray(val[lang]||val)?(val[lang]||val):[val[lang]||val];
+  items.forEach(function(item){
+    var di=document.createElement('div');
+    di.className='sec-item';
+    di.textContent=item;
+    body.appendChild(di);
+  });
+  // Attach click handler properly
+  hdr.addEventListener('click',function(){
+    body.classList.toggle('open');
+    hdr.querySelector('.arrow').textContent=body.classList.contains('open')?'−':'+';
+  });
+  d.appendChild(hdr);
+  d.appendChild(body);
+  sec.appendChild(d);
+});$('btn-retake').textContent=lang==='en'?'Take Quiz Again':'Ambil Kuiz Semula';}
 function retake(){currentQ=0;answers=[];shuffledQs=buildShuffled();show('s-quiz');renderQ();}
 function showEntry(){show('s-entry');}
 function showTrainer(){show('s-trainer');showDashTab('live');renderSetButtons();}
